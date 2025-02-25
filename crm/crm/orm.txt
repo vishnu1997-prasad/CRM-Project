@@ -1,0 +1,10 @@
+ORM Query
+
+model - Students
+
+1 -- To create
+
+Students.objects.create(adm_num = 'LM101',first_name = 'Vishnu', last_name = 'Prasad', course = 'Py-Django', trainer_name = 'Anzil') 
+
+2 - To read
+
