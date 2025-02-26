@@ -1,6 +1,8 @@
 {%extends 'base.html'%}
 
 {%block main%}
+{%load check_roles%}
+
 <div class="container grid px-6 mx-auto">
 <div class="flex items-center justify-between my-4 ">
       <h4
@@ -8,13 +10,18 @@
       >
         Students
       </h4>
-      <div>
+      
+        {%check_user_role request 'Admin,Sales' as allow %}
+        {% if allow %}
+        <div>
         <a href="{%url 'registration'%}">
         <button class="px-5 py-3 font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
           Add Student
         </button>
       </a>
-      </div>
+    </div>
+      {%endif%}
+
     </div><div class="w-full overflow-hidden rounded-lg shadow-xs">
 <div class="w-full overflow-x-auto">
   <table class="w-full whitespace-no-wrap">
@@ -182,7 +189,7 @@
         </li>
         <li>
           <button
-            class="px-3 py-1 rounded-md focus:outline-none focus:shadow-outline-purple"
+          class="px-3 py-1 text-white transition-colors duration-150 bg-purple-600 border border-r-0 border-purple-600 rounded-md focus:outline-none focus:shadow-outline-purple"
           >
             1
           </button>
@@ -196,7 +203,7 @@
         </li>
         <li>
           <button
-            class="px-3 py-1 text-white transition-colors duration-150 bg-purple-600 border border-r-0 border-purple-600 rounded-md focus:outline-none focus:shadow-outline-purple"
+          class="px-3 py-1 rounded-md focus:outline-none focus:shadow-outline-purple"
           >
             3
           </button>
