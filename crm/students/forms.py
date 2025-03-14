@@ -76,9 +76,9 @@ class StudentRegisterForm(forms.ModelForm):
             
             self.add_error('pincode','pincode must be 6 digits')
 
-        if Students.objects.filter(profile__username = email).exists() :
+        # if Students.objects.filter(profile__username = email).exists() :
 
-            self.add_error('email', 'This email is already taken. Try another one') 
+        #     self.add_error('email', 'This email is already taken. Try another one') 
 
         return cleaned_data
     

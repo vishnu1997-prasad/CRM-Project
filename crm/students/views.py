@@ -1,7 +1,7 @@
 from django.shortcuts import render,redirect,get_object_or_404
 from django.views.generic import View
 from .models import DistrictChoice,CourseChoice,TrainerChoice,BatchChoice
-from .utility import get_admission_num,get_password
+from .utility import get_admission_num,get_password,send_email
 from .models import Students
 from django.db import transaction
 from .forms import StudentRegisterForm
@@ -11,6 +11,10 @@ from authentication.models import Profile
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from authentication.permissions import permission_roles
+import datetime
+import threading     #for multi threading
+from payments.models import Payment
+# from payments.forms import PaymentStructureForm
 # Create your views here.
 
 
@@ -25,7 +29,7 @@ class GetStudentObject() :
 
             return student
 
-        except :
+        except Students.DoesNotExist:
 
             return render(request,'error_pages/error-404.html')
         
@@ -57,6 +61,19 @@ class StudentsListView(View) :
             if query :
 
                 students = Students.objects.filter(Q(active_status=True)&Q(trainer__profile = request.user)&(Q(first_name__icontains=query)|Q(last_name__icontains = query)|Q(house_name__icontains=query)|
+                                                                      
+                                                                      Q(contact_num__icontains = query)|Q(pincode__icontains = query)|Q(post_office__icontains = query)|
+                                                                      
+                                                                      Q(email__icontains = query)|Q(course__name__icontains = query)|Q(district__icontains = query)
+                                                                     
+                                                                      |Q(batch__name__icontains = query)|Q(trainer__first_name__icontains = query)))
+        elif role in ['Academic Counsellor'] :
+
+            students = Students.objects.filter(active_status = True,batch__academic_counselor__profile = request.user)
+
+            if query :
+
+                students = Students.objects.filter(Q(active_status=True)&Q(batch__academic_counselor__profile = request.user)&(Q(first_name__icontains=query)|Q(last_name__icontains = query)|Q(house_name__icontains=query)|
                                                                       
                                                                       Q(contact_num__icontains = query)|Q(pincode__icontains = query)|Q(post_office__icontains = query)|
                                                                       
@@ -96,6 +113,8 @@ class RegistrationView(View) :
 
         form = StudentRegisterForm()
 
+        # payment_form = PaymentStructureForm()
+
         # data = {'districts' : DistrictChoice, 'courses' : CourseChoice,'batches':BatchChoice, 'trainers' :TrainerChoice, 'form':form}
 
         data = {'form':form}
@@ -107,6 +126,8 @@ class RegistrationView(View) :
     def post(self,request,*args,**kwargs):
 
         form = StudentRegisterForm(request.POST,request.FILES)
+
+        # payment_form = PaymentStructureForm(request.POST)
 
         if form.is_valid():
 
@@ -129,6 +150,35 @@ class RegistrationView(View) :
                 student.profile = profile    # zlPSFMIA
 
                 student.save()
+
+                #payment section
+
+                fee = student.course.offer_fee if student.course.offer_fee else student.course.fee
+
+                Payment.objects.create(student=student,amount = fee,)
+
+                #sending login credentials to student through mail
+
+                subject = 'Login Credentials'
+
+                recepients = [student.email]
+
+                template = 'email/login-credential.html'
+
+                join_date = student.join_date
+
+                date_after_10_days = join_date + datetime.timedelta(days=10)
+
+                context = {'name' : f'{student.first_name} {student.last_name}','username' : username,'password' : password,'date_after_10_days' : date_after_10_days}
+
+                # send_email(subject,recepients,template,context)
+
+
+                # if payment_form.is_valid() :
+
+                thread = threading.Thread(target = send_email,args=(subject,recepients,template,context))
+
+                thread.start()
 
             return redirect('students-list')
         
